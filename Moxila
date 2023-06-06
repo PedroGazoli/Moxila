@@ -1,0 +1,70 @@
+import random
+
+# Dados do problema da mochila
+itens = [('item1', 10, 60), ('item2', 20, 100), ('item3', 30, 120)]  # (nome, peso, valor)
+peso_maximo = 50
+
+# Parâmetros do algoritmo genético
+tamanho_populacao = 50
+taxa_cruzamento = 0.8
+taxa_mutacao = 0.1
+numero_geracoes = 100
+
+def criar_individuo():
+    return [random.randint(0, 1) for _ in range(len(itens))]
+
+def criar_populacao():
+    return [criar_individuo() for _ in range(tamanho_populacao)]
+
+def avaliar_individuo(individuo):
+    peso_total = sum(individuo[i] * itens[i][1] for i in range(len(itens)))
+    valor_total = sum(individuo[i] * itens[i][2] for i in range(len(itens)))
+    if peso_total > peso_maximo:
+        valor_total = 0  # Penalidade se o peso total exceder o máximo
+    return valor_total
+
+def selecionar_pais(populacao):
+    pais = random.choices(populacao, k=2, weights=[avaliar_individuo(individuo) for individuo in populacao])
+    return pais[0], pais[1]
+
+def cruzar(pai1, pai2):
+    ponto_corte = random.randint(1, len(pai1) - 1)
+    filho1 = pai1[:ponto_corte] + pai2[ponto_corte:]
+    filho2 = pai2[:ponto_corte] + pai1[ponto_corte:]
+    return filho1, filho2
+
+def mutar(individuo):
+    for i in range(len(individuo)):
+        if random.random() < taxa_mutacao:
+            individuo[i] = 1 - individuo[i]  # Troca de 0 para 1 ou de 1 para 0
+
+def algoritmo_genetico():
+    populacao = criar_populacao()
+    
+    for geracao in range(numero_geracoes):
+        nova_populacao = []
+        
+        for _ in range(tamanho_populacao // 2):
+            pai1, pai2 = selecionar_pais(populacao)
+            filho1, filho2 = cruzar(pai1, pai2)
+            mutar(filho1)
+            mutar(filho2)
+            nova_populacao.extend([filho1, filho2])
+        
+        populacao = nova_populacao
+        
+        melhor_individuo = max(populacao, key=avaliar_individuo)
+        melhor_valor = avaliar_individuo(melhor_individuo)
+        
+        print(f"Geração: {geracao + 1} | Melhor valor: {melhor_valor}")
+    
+    melhor_individuo = max(populacao, key=avaliar_individuo)
+    melhor_valor = avaliar_individuo(melhor_individuo)
+    
+    print("\nMelhor combinação de itens para a mochila:")
+    for i in range(len(itens)):
+        if melhor_individuo[i] == 1:
+            print(f"{itens[i][0]} | Peso: {itens[i][1]} | Valor: {itens[i][2]}")
+    print(f"\nValor total da mochila: {melhor_valor}")
+
+algoritmo_genetico()
